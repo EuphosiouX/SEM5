@@ -1,0 +1,4 @@
+create a live bootable usb image for forum and play around with it.
+
+
+search program vs process vs thread
