@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+
+<head>
+    <title>Tic-Tac-Toe Game Tree</title>
+</head>
+
+<body>
+    <script src="http://www.davidrobles.net/js/visualizing-game-trees-with-d3/underscore.js"></script>
+    <script src="http://www.davidrobles.net/js/visualizing-game-trees-with-d3/backbone.js"></script>
+    <script src="http://www.davidrobles.net/js/visualizing-game-trees-with-d3/d3.js"></script>
+    <script src="http://www.davidrobles.net/js/visualizing-game-trees-with-d3/mauler-0.0.4.js"></script>
+
+    <script>
+
+        var ticTacToe = new ma.games.TicTacToe({
+            board: [[' ', ' ', ' '],
+            ['X', 'O', ''],
+            ['X', 'O', 'O']]
+        });
+
+        var margin = { top: 50, right: 50, bottom: 50, left: 50 },
+            width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom,
+            nodeSize = 85,
+            nodeMargin = nodeSize / 3.4;
+        edgeWidth = 2;
+
+        var svgView = new ma.views.TicTacToeSVG({
+            model: ticTacToe,
+            sideLength: nodeSize
+        });
+
+        var depthFirstTreeGenerator = function (node) {
+            var moves = node.game.moves();
+            if (moves.length > 0) {
+                node.children = [];
+                for (var i = 0; i < moves.length; i++) {
+                    var newTic = node.game.copy();
+                    newTic.move(i);
+                    var newGameNode = { game: newTic };
+                    node.children.push(newGameNode);
+                    depthFirstTreeGenerator(newGameNode);
+                }
+            }
+        };
+
+        var root = {
+            name: "root",
+            game: ticTacToe
+        };
+
+        depthFirstTreeGenerator(root);
+
+        var diagonal = d3.svg.diagonal().projection(function (d) { return [d.x, d.y]; });
+
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .attr("style", "background-color: wheat")
+            .append("g")
+            .attr("transform", "translate(" + margin.left + ", " + margin.top + ")");
+
+        var tree = d3.layout.tree().size([width, height]);
+
+        tree.separation(function () {
+            return 2;
+        });
+
+        var nodes = tree(root);
+
+        // Draw edges
+        svg.selectAll("path")
+            .data(tree.links(nodes))
+            .enter().append("path")
+            .attr("d", diagonal)
+            .attr("fill", "none")
+            .attr("stroke", "#666666")
+            .attr("stroke-width", 2);
+
+        svg.selectAll("g.node-group")
+            .data(nodes)
+            .enter()
+            .append("g")
+            .attr("class", "node-group")
+            .attr("transform", function (d) {
+                return "translate(" + (d.x - nodeMargin) + ", " + (d.y - nodeMargin) + ")"
+            });
+
+        // Draw nodes
+        svg.selectAll(".node-group")
+            .each(function (node) {
+                svgView.model = node.game;
+                svgView.svg = d3.select(this);
+                svgView.render();
+            });
+
+        svg.selectAll(".node-group")
+            .attr("transform", function () {
+                return this.getAttribute("transform") + " scale(0.6)";
+            });
+
+    </script>
+</body>
+
+</html>
