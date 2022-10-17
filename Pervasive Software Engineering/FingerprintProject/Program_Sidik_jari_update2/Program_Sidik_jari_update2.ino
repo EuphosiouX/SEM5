@@ -12,8 +12,8 @@ SoftwareSerial mySerial(2, 3);
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&mySerial);
 
 //------------------------------//
-int tombol1 = A2;
-int relay1 = 8;
+int tombol1 = A0;
+int relay1 = 11;
 int eadd = 0;
 int getFingerprintIDez();
 uint8_t getFingerprintEnroll(int id);
@@ -27,7 +27,7 @@ void setup() {
 
   pinMode(relay1, OUTPUT);
   pinMode(tombol1, INPUT_PULLUP);
-  digitalWrite(relay1, LOW);
+  digitalWrite(relay1, HIGH);
 
   finger.begin(57600);
   if (finger.verifyPassword()) {
@@ -39,32 +39,37 @@ void setup() {
 }
 
 void loop() {
+  int x;
+  x = analogRead(0);
   lcd.setCursor (0, 0);
   lcd.print(F(" -System Ready- "));
+  Serial.println(x);
+  Serial.println(digitalRead(tombol1));
 
-  if (!digitalRead(tombol1)) {
-    delay(1000);
-    if (!digitalRead(tombol1)) {
-      finger.emptyDatabase();
-      eadd = 0;
-      EEPROM.write(0, eadd);
-      lcd.clear();
-      delay(15);
-      lcd.setCursor(3, 0);
-      lcd.print("Sidik Jari");
-      lcd.setCursor(1, 1);
-      lcd.print("Telah Dihapus");
-      delay(2500);
-      lcd.clear();
-      delay(15);
-      goto awal;
-    }
+  if (60 < x && x < 200) {
     eadd += 1;
     if (eadd > 50)eadd = 0;
     EEPROM.write(0, eadd);
     getFingerprintEnroll(eadd);
     eadd = EEPROM.read(0);
   }
+
+  else if (200 < x && x < 400) {
+    finger.emptyDatabase();
+    eadd = 0;
+    EEPROM.write(0, eadd);
+    lcd.clear();
+    delay(15);
+    lcd.setCursor(3, 0);
+    lcd.print("Sidik Jari");
+    lcd.setCursor(1, 1);
+    lcd.print("Telah Dihapus");
+    delay(2500);
+    lcd.clear();
+    delay(15);
+    goto awal;
+  }
+
 awal:
   getFingerprintIDez();
   delay(100);

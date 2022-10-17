@@ -72,7 +72,7 @@ int getFingerprintIDez() {
   if (p != FINGERPRINT_OK)
   {
     lcd.clear();
-    delay(15);
+    // delay(15);
     lcd.setCursor(1, 0);
     lcd.print("Akses Ditolak");
     Serial.println("Salah");
@@ -88,7 +88,7 @@ int getFingerprintIDez() {
   }
   lcd.clear();
   delay(15);
-  digitalWrite(relay1, HIGH);
+  digitalWrite(relay1, LOW);
   lcd.setCursor(1, 0);
   lcd.print("Akses Diterima");
   lcd.setCursor (0, 1);
@@ -97,7 +97,7 @@ int getFingerprintIDez() {
     lcd.setCursor (15, 1); lcd.print(i);
     delay (1000);
   }
-  digitalWrite(relay1, LOW);
+  digitalWrite(relay1, HIGH);
   lcd.clear();
   delay(15);
 
