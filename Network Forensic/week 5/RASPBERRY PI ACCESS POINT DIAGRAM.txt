@@ -1,0 +1,4 @@
+user to pi -> wifi
+pi to internet -> ethernet to router
+hacker to pi -> using wifi and ssh
+inside pi -> hostapd,port forwarding, dhcpd, 

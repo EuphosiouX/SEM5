@@ -43,8 +43,8 @@ void loop() {
   x = analogRead(0);
   lcd.setCursor (0, 0);
   lcd.print(F(" -System Ready- "));
-  Serial.println(x);
-  Serial.println(digitalRead(tombol1));
+  // Serial.println(x);
+  // Serial.println(digitalRead(tombol1));
 
   if (60 < x && x < 200) {
     eadd += 1;
