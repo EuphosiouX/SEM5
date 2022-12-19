@@ -2,6 +2,7 @@
 
 
 #include <LiquidCrystal_I2C.h>
+using namespace std;
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 #include <NewPing.h> // Include  library used for measuring the distance using HC-SR 06 sonar sensor
 #define TRIGGER_PIN  6  // Arduino pin tied to trigger pin on the ultrasonic sensor.
@@ -21,7 +22,7 @@ int flag;
 byte readval;
 
 #define buttonPin 10
-int buttonState = 0;      // variable for reading the pushbutton status
+int buttonState;      // variable for reading the pushbutton status
 float TankHeight, WaterLevelMAX, GapbwSonar, SonarReading, ActualReading,  Temp;
 int percentage;
 int DRYSensorPin = A0; // set A0 as the Spump water sensor pin
@@ -36,6 +37,7 @@ void setup() {
   lcd.begin(20, 4); // set up the LCD's number of columns and rows:
 
   pinMode(MOTORPIN,OUTPUT);// Relay pin as output pin
+  pinMode(buttonPin, INPUT_PULLUP);
  // pinMode(EXTRELAYPIN,OUTPUT);// External Relay pin as output pin
   digitalWrite(MOTORPIN,LOW); //Turn off the relay
 //  digitalWrite(EXTRELAYPIN,HIGH); //Turn off the external relay(External Relay I used was turning on while giving LOW signal, Check your one while doing the program)
@@ -107,7 +109,7 @@ delay(1000);
   lcd.print("cm ");
   lcd.setCursor(0,2);
   lcd.print("Cheers             ");
-   lcd.setCursor(0,3);
+  lcd.setCursor(0,3);
   lcd.print("WELCOME to SMART    ");
  
   delay(2000);
@@ -139,113 +141,95 @@ void loop() {
   Temp= SonarReading-GapbwSonar;
   ActualReading= WaterLevelMAX-Temp;
   percentage=(ActualReading/WaterLevelMAX*100);
+  Serial.println("percent:");
   Serial.println(percentage);
+  Serial.println("dry sensor:");
+  Serial.println(DRYsensorValue);
   //Serial.println(TankHeight);
   lcd.setCursor(0,0);
   lcd.print("WATER LEVEL:");
   lcd.print(percentage);
   lcd.print("%  ");
-  if(DRYsensorValue>=100)
+  
+  if(DRYsensorValue>=100){
 
-  {
+    if(percentage<=20){
+      lcd.setCursor(0,3);
+      lcd.print("SUMP: WATER FILLED ");
+      lcd.setCursor(0,1);
+      lcd.print("PUMP STATUS: RUNNING");
+      digitalWrite(MOTORPIN,HIGH);
+    //  digitalWrite(EXTRELAYPIN,LOW);
+      flag=1;
+      EEPROM.write(addr2, flag);
+      flag= EEPROM.read(addr2);
 
-  if(percentage<=20)
+    //  ZeroPercentage();
+    }
 
-  {
-   lcd.setCursor(0,3);
-  lcd.print("SUMP: WATER FILLED ");
-  lcd.setCursor(0,1);
-  lcd.print("PUMP STATUS: RUNNING");
-  digitalWrite(MOTORPIN,HIGH);
-//  digitalWrite(EXTRELAYPIN,LOW);
-  flag=1;
-  EEPROM.write(addr2, flag);
-  flag= EEPROM.read(addr2);
+    else if(percentage>20 && percentage<=100){
 
-//  ZeroPercentage();
+      flag= EEPROM.read(addr2);
 
+      if(percentage>20 && percentage<=100 && flag ==1){
+        digitalWrite(MOTORPIN,HIGH);
+        // digitalWrite(EXTRELAYPIN,LOW);
+        lcd.setCursor(0,1);
+        lcd.print("PUMP STATUS: RUNNING");
+      }
+
+      else if(percentage>20 && percentage<=100 && flag ==0){
+      
+      digitalWrite(MOTORPIN,LOW);
+      //digitalWrite(EXTRELAYPIN,HIGH);
+      lcd.setCursor(0,1);
+      lcd.print("PUMP STATUS: OFF    ");
+      }
+    }
+
+    else if(percentage>100){
+
+      delay(500);
+      lcd.setCursor(0,1);
+      lcd.print("PUMP STATUS: OFF    ");
+      lcd.setCursor(0,0);
+      lcd.print("Water Level:");
+      lcd.print("100");
+      lcd.print("%  ");
+      digitalWrite(MOTORPIN,LOW);
+    // digitalWrite(EXTRELAYPIN,HIGH);
+
+      flag=0;
+
+      EEPROM.write(addr2, flag);
+      flag= EEPROM.read(addr2);
+
+    //  HundredPercentage();
+    }
   }
 
-  else if(percentage>20 && percentage<=100)
+  else if(DRYsensorValue<=100){
 
-  {
+    flag= EEPROM.read(addr2);
+    if(flag==1){ 
+      //  lcd.clear();
+      lcd.setCursor(0,3);
+      lcd.print("SUMP: WATER FILLED ");
+      lcd.setCursor(0,1);
+      lcd.print("PUMP STATUS: DRYRUN!");
+      digitalWrite(BUZZER,HIGH);
+      digitalWrite(MOTORPIN, LOW);
+    // digitalWrite(EXTRELAYPIN, HIGH);
+      delay(100);
+      digitalWrite(BUZZER,LOW);
+      delay(100);
+    }
 
-  flag= EEPROM.read(addr2);
-  if(percentage>20 && percentage<=100 && flag ==1)
-
-  {
-    digitalWrite(MOTORPIN,HIGH);
- //   digitalWrite(EXTRELAYPIN,LOW);
-  lcd.setCursor(0,1);
-  lcd.print("PUMP STATUS: RUNNING");
+    else if(flag==0){
+      lcd.setCursor(0,3);
+      lcd.print("SUMP: NOWATER/CHECK");
+    }
   }
-
-   else if(percentage>20 && percentage<=100 && flag ==0)
-
-  {
-    digitalWrite(MOTORPIN,LOW);
- //   digitalWrite(EXTRELAYPIN,HIGH);
-  lcd.setCursor(0,1);
-  lcd.print("PUMP STATUS: OFF    ");
-
-  }
-
-   }
-
-  else if(percentage>100)
-
-  {
-
-  delay(500);
-  lcd.setCursor(0,1);
-  lcd.print("PUMP STATUS: OFF    ");
-  lcd.setCursor(0,0);
-  lcd.print("Water Level:");
-  lcd.print("100");
-  lcd.print("%  ");
-   digitalWrite(MOTORPIN,LOW);
- // digitalWrite(EXTRELAYPIN,HIGH);
-
-  flag=0;
-
-  EEPROM.write(addr2, flag);
-  flag= EEPROM.read(addr2);
-
-//  HundredPercentage();
-
-  }
-
-  }
-
- else if(DRYsensorValue<=100)
-
-{
-
-  flag= EEPROM.read(addr2);
-  if(flag==1)
-
-  { 
-  //  lcd.clear();
-  lcd.setCursor(0,3);
-  lcd.print("SUMP: WATER FILLED ");
-  lcd.setCursor(0,1);
-  lcd.print("PUMP STATUS: DRYRUN!");
-  digitalWrite(BUZZER,HIGH);
-  digitalWrite(MOTORPIN, LOW);
- // digitalWrite(EXTRELAYPIN, HIGH);
-  delay(100);
-  digitalWrite(BUZZER,LOW);
-  delay(100);
-  }
-
-  else if(flag==0)
-
-  {
-  lcd.setCursor(0,3);
-  lcd.print("SUMP: NOWATER/CHECK");
-  }
-}
-
 }
 
  
