@@ -1,35 +1,34 @@
-#include <SoftwareSerial.h>
- 
-SoftwareSerial esp8266(2, 3); // Membuat RX Arduino menjadi pin 2 dan TX pin 
-void setup()
-{
-  Serial.begin(115200);
-  esp8266.begin(115200); 
+#define trigPin D7
+#define echoPin D8
+
+// defines variables
+long duration;
+int distance;
+
+void setup() {
+pinMode(trigPin, OUTPUT); // Sets the trigPin as an Output
+pinMode(echoPin, INPUT); // Sets the echoPin as an Input
+Serial.begin(9600); // Starts the serial communication
 }
- 
-void loop()
-{
-  if(esp8266.available()) // Mengecek apakah ESP mengirimkan pesan
-  {
-    while(esp8266.available())
-    {
-      char c = esp8266.read(); // Membaca karakter selanjutnya.
-      Serial.write(c);
-    }
-  }
 
- 
+void loop() {
 
-  if(Serial.available())
-  {
-      delay(500); 
+// Clears the trigPin
+digitalWrite(trigPin, LOW);
+delayMicroseconds(2);
 
-    String command="";
+// Sets the trigPin on HIGH state for 10 micro seconds
+digitalWrite(trigPin, HIGH);
+delayMicroseconds(10);
+digitalWrite(trigPin, LOW);
 
-    while(Serial.available()) // membaca perintah karakter by karakter
-    {
-    command+=(char)Serial.read();
-    }
-    esp8266.println(command); // mengirim karakter yang terpaca kepada ESP
-  }
+// Reads the echoPin, returns the sound wave travel time in microseconds
+duration = pulseIn(echoPin, HIGH);
+
+// Calculating the distance
+distance= duration*0.034/2;
+// Prints the distance on the Serial Monitor
+Serial.print("Distance: ");
+Serial.println(distance);
+delay(2000);
 }
